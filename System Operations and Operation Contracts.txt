@@ -1,149 +1,112 @@
-# System Operations and Operation Contracts
+# System Operations for the Process Offerings Use Case
 
-## 1. Operation: makeOffering(offeringDetails)
-**Cross References**: 
-- Use cases: Enter Organization Offerings
+- addOffering(LocationType, String, String, DayTimeSlotType, int)
+- selectOffering(Offering, Instructor)
+- viewOfferings()
+- registerInstructor(String, String[], String[])
+- viewAvailableOfferings(Instructor)
+- deleteInstructor(Instructor)
 
-**Preconditions**:
-- Administrator is logged in
-- An Organization instance exists
-- offeringDetails contains valid location, time slot, and offering type
-- Specified Location exists in the system
-- Specified time slot does not conflict with existing offerings at the location
+# Contracts for Process Offerings Use Case
 
-**Postconditions**:
-- A new instance of Offering was created
-- The new Offering's attributes were set based on offeringDetails
-- The new Offering was associated with the specified Location
-- The new Offering was associated with the Organization
-- The Offering's status was set to "Available"
-- The Offering was added to the Organization's collection of offerings
-- The Location's Schedule was updated to include the Offering's time slot
-- The system's total number of offerings increased by one
+## Contract CO1: Administrator Creates an Offering
 
-## 2. Operation: viewAvailableOfferings()
-**Cross References**: 
-- Use cases: View Available Offerings
+**Operation:** `addOffering(location: LocationType, lessonType: String, mode: String, dayTimeSlot: DayTimeSlotType, capacity: int)`
 
-**Preconditions**:
-- User (Client/Instructor) is authenticated
+**Cross References:** Use Case: Process Offerings
 
-**Postconditions**:
-- No system state changes (query operation)
-- Returns collection of Offering instances where status is "Available"
+**Preconditions:**
+- Administrator is logged in.
+- The location is available for the specified `DayTimeSlot`.
+- The lesson type (e.g., Judo, swimming) is valid.
 
-## 3. Operation: takeOnOffering(offeringId, instructorId)
-**Cross References**: 
-- Use cases: Take On Offerings
+**Postconditions:**
+- An `Offering` instance `offering` was created. *(instance creation)*
+- `offering.location` was set to `location`. *(attribute modification)*
+- `offering.lessonType` was set to `lessonType`. *(attribute modification)*
+- `offering.mode` was set to `mode` (group or private). *(attribute modification)*
+- `offering.dayTimeSlot` was set to the given time slots. *(attribute modification)*
+- `offering` was made available for public viewing. *(association formed)*
 
-**Preconditions**:
-- Instructor is authenticated
-- An Offering instance with offeringId exists
-- Offering status is "Available"
-- An Instructor instance with instructorId exists
-- Instructor's schedule has no conflicts with offering time slot
+---
 
-**Postconditions**:
-- The Offering instance's instructor attribute was set to reference the Instructor
-- The Offering instance's status was changed to "Assigned"
-- The Offering was added to the Instructor's collection of offerings
-- The Instructor's schedule was updated to include the offering's time slot
-- The Organization's available offerings collection was updated
+## Contract CO2: Instructor Selects Offering
 
-## 4. Operation: makeBooking(clientId, offeringId, paymentDetails)
-**Cross References**: 
-- Use cases: Make Booking
+**Operation:** `selectOffering(offering: Offering, instructor: Instructor)`
 
-**Preconditions**:
-- Client is authenticated
-- A Client instance with clientId exists
-- An Offering instance with offeringId exists
-- Offering status is "Available" or "Assigned"
-- Payment details are valid
-- Client has no conflicting bookings
+**Cross References:** Use Case: Process Offerings
 
-**Postconditions**:
-- A new instance of Booking was created
-- The Booking's attributes were set based on the parameters
-- The Booking was associated with the specified Client
-- The Booking was associated with the specified Offering
-- The Booking's status was set to "Confirmed"
-- The Booking was added to the Client's collection of bookings
-- The Offering's available capacity was decreased by one
-- A payment transaction record was created
-- The system's total number of bookings increased by one
+**Preconditions:**
+- The offering is available.
+- The instructor is registered and has the correct specialization for the offering.
+- The instructor is available in the offering's city.
 
-## 5. Operation: cancelBooking(bookingId)
-**Cross References**: 
-- Use cases: Cancel Booking
+**Postconditions:**
+- `instructor` was associated with the `offering`. *(association formed)*
+- The `offering` was marked as no longer available to other instructors. *(attribute modification)*
+- The `offering` was updated to show the assigned instructor for public viewing. *(attribute modification)*
 
-**Preconditions**:
-- Client is authenticated
-- A Booking instance with bookingId exists
-- Booking belongs to the authenticated client
-- Booking status is not "Cancelled"
+---
 
-**Postconditions**:
-- The Booking instance's status was changed to "Cancelled"
-- The associated Offering's available capacity was increased by one
-- The Booking was removed from active bookings collection
-- The Booking was added to cancelled bookings collection
-- A refund transaction record was created (if applicable)
-- The Client's active bookings collection was updated
+## Contract CO3: Admin Views Available Offerings
 
-## 6. Operation: registerCredentials(instructorDetails)
-**Cross References**: 
-- Use cases: Register Credentials and Availability
+**Operation:** `viewOfferings()`
 
-**Preconditions**:
-- instructorDetails contains all required information
-- No existing Instructor with the same email exists
-- Specified qualifications are valid
+**Cross References:** Use Case: Process Offerings
 
-**Postconditions**:
-- A new instance of Instructor was created
-- The Instructor's attributes were set based on instructorDetails
-- The Instructor was associated with the specified Organization
-- The Instructor's credentials were validated and stored
-- The Instructor's initial schedule was created
-- The system's total number of instructors increased by one
-- The Organization's instructor collection was updated
+**Preconditions:**
+- Offerings are available in the system.
 
-## 7. Operation: deleteUserAccount(userId)
-**Cross References**: 
-- Use cases: Delete User Account
+**Postconditions:**
+- A list of offerings is presented showing location, lesson type, `dayTimeSlot`, and availability status (only for admin). *(no instance creation or modification; only viewing public data)*
 
-**Preconditions**:
-- Administrator is logged in
-- A User instance with userId exists
-- User has no active bookings (if Client)
-- User has no active offerings (if Instructor)
+---
 
-**Postconditions**:
-- The User instance's status was changed to "Inactive"
-- All associated data was marked for archival
-- User's authentication credentials were revoked
-- User was removed from active users collection
-- User was added to archived users collection
-- Associated Organization's user collections were updated
-- System access permissions for the user were revoked
+## Contract CO4: Instructor Registration
 
-## 8. Operation: updateSchedule(locationId, scheduleDetails)
-**Cross References**: 
-- Use cases: Enter Organization Offerings
+**Operation:** `registerInstructor(name: String, specialization: String[], availabilityCities: String[])`
 
-**Preconditions**:
-- Administrator is logged in
-- A Location instance with locationId exists
-- scheduleDetails contains valid time slots
-- No conflicts with existing confirmed bookings
-- Location is active in the system
+**Cross References:** Use Case: Process Offerings
 
-**Postconditions**:
-- The Location's Schedule instance was updated
-- All new TimeSlot instances were created
-- Old TimeSlot instances were marked as inactive
-- Affected Offerings' schedules were updated
-- Location's available time slots collection was updated
-- Notifications were created for affected bookings/offerings
-- The system's schedule version number was incremented
+**Preconditions:**
+- The instructor is not already registered in the system.
+- Valid specialization(s) and city names are provided.
+
+**Postconditions:**
+- An `Instructor` instance `instructor` was created. *(instance creation)*
+- `instructor.name` was set to `name`. *(attribute modification)*
+- `instructor.specialization` was set to `specialization`. *(attribute modification)*
+- `instructor.availabilityCities` was set to `availabilityCities`. *(attribute modification)*
+- `instructor` was made available to take on future offerings. *(association formed)*
+
+---
+
+## Contract CO5: Instructor Views Available Offerings
+
+**Operation:** `viewAvailableOfferings(instructor: Instructor)`
+
+**Cross References:** Use Case: Process Offerings
+
+**Preconditions:**
+- The instructor is registered in the system.
+
+**Postconditions:**
+- A list of offerings that are available is displayed. *(no instance creation or modification; only data viewing)*
+- The offerings are displayed with details such as lesson type, location, and time slot.
+
+---
+
+## Contract CO6: Delete Instructor
+
+**Operation:** `deleteInstructor(instructor: Instructor)`
+
+**Cross References:** Use Case: Process Offerings
+
+**Preconditions:**
+- The administrator is logged in and has access to the system.
+- The instructor exists in the system.
+
+**Postconditions:**
+- The `Instructor` instance `instructor` was deleted. *(instance deletion)*
+- Any offerings associated with `instructor` were marked as available to other instructors. *(attribute modification/association removed)*
+- The instructor is no longer able to log into the system or view offerings. *(association broken)*
