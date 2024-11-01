@@ -8,7 +8,7 @@ class Offering {
     private DayTimeSlot dayTimeSlot;
     private int capacity;
     private Instructor instructor;
-    private boolean isAvailable;
+    boolean isAvailable;
 
     public Offering(Location location, String lessonType, String mode, DayTimeSlot dayTimeSlot, int capacity) {
         this.location = location;
