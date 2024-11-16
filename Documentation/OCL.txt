@@ -1,0 +1,31 @@
+1. Offerings unique. In other words, multiple offerings on the same day and time slot must be offered at a different location
+
+context Offering
+inv UniqueLocationForDayTime:
+    Offering.allInstances()->forAll(o1, o2 | 
+        o1 <> o2 implies 
+        (o1.date <> o2.date or o1.timeSlot <> o2.timeSlot or o1.location <> o2.location)
+    )
+
+2. Any client who is underage must necessarily be accompanied by an adult who
+acts as their guardian.
+
+context Client
+inv UnderageAccompaniedByGuardian:
+    self.age < 18 implies self.guardian->notEmpty() and self.guardian.age >= 18
+
+3. The city of an offering must be one of the instructor's available cities.
+
+context Offering
+inv CityInInstructorAvailability:
+    self.instructor.availableCities->includes(self.city)
+
+4. A client cannot have multiple bookings on the same day and time slot.
+
+context Client
+inv NoOverlappingBookings:
+    self.bookings->forAll(b1, b2 | 
+        b1 <> b2 implies 
+        (b1.date <> b2.date or b1.timeSlot <> b2.timeSlot)
+    )
+
